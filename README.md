@@ -1,4 +1,4 @@
-# Nivetha OS
+# MyOS · Nivetha OS
 
 Private web-first life control center, plus an installable Android companion. ORBIT provides rule-based daily briefings, spoken playback where supported, keyboard commands, and focus sessions. It is not a general AI chatbot or an autonomous agent.
 
