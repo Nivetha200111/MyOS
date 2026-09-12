@@ -11,6 +11,7 @@ export default async function Page({
   if (
     ![
       "today",
+      "whoop",
       "goals",
       "work",
       "leetcode",

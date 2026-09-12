@@ -24,9 +24,13 @@ import {
 } from "@/components/ui/command";
 import { Editor, type EditTarget } from "./editor";
 import { View } from "./views";
+import { WhoopPanel } from "./whoop-panel";
+import { useWhoop } from "./use-whoop";
+import { cycleSignals, indiaDate } from "@/lib/whoop-data";
 import { useWorkspace } from "./use-workspace";
 import { day, afterDay, type RecordItem } from "@/lib/model";
 import {
+  Heart,
   Activity,
   ArrowUpRight,
   BookOpen,
@@ -68,6 +72,7 @@ import { Progress } from "@/components/ui/progress";
 const nav = [
   ["Command center", LayoutDashboard],
   ["Today", ListTodo],
+  ["WHOOP", Heart],
   ["Active goals", Target],
   ["Work", BriefcaseBusiness],
   ["LeetCode", Code2],
@@ -101,6 +106,7 @@ const priorities = [
 const routes: Record<string, string> = {
   "Command center": "/",
   Today: "/today",
+  WHOOP: "/whoop",
   "Active goals": "/goals",
   Work: "/work",
   LeetCode: "/leetcode",
@@ -119,6 +125,8 @@ export default function OS() {
   const [deleteTarget, setDeleteTarget] = useState<RecordItem | null>(null);
   const [now, setNow] = useState(Date.now());
   const { records, status, ready, busy, reload, save, remove } = useWorkspace();
+  const whoop = useWhoop();
+  const body = cycleSignals(whoop.data?.snapshot || null);
   const date = day(new Date(now));
   const tasks = records.filter(
     (r) => r.kind === "task" && r.data.date === date && r.data.priority,
@@ -193,12 +201,20 @@ export default function OS() {
       window.removeEventListener("keydown", shortcut);
     };
   }, []);
+  const bodyNote =
+    body.cycle?.start &&
+    indiaDate(body.cycle.start) === date &&
+    whoop.data?.updated &&
+    now - whoop.data.updated < 30 * 60000
+      ? `WHOOP reports ${body.recoveryScore == null ? "recovery still pending" : body.recoveryScore + "% recovery"}${body.hours == null ? "" : " and " + body.hours.toFixed(1) + " hours asleep"}. Check in with how you feel before planning your day. `
+      : "";
   const briefing =
-    latestHealth?.data.date === date && latestHealth.data.energy === "Low"
+    bodyNote +
+    (latestHealth?.data.date === date && latestHealth.data.energy === "Low"
       ? "Your energy is low today. Reduce the load. Choose one essential outcome and make room for recovery."
       : tasks.length
         ? `You have ${tasks.length - completed} ${tasks.length - completed === 1 ? "priority" : "priorities"} remaining. ${tasks.find((r) => !r.data.done)?.data.title || "Your big three are complete. Protect your evening."} ${due ? `${due} problem revisions are due.` : ""}`
-        : "Today, protect your focus: one work outcome, one problem understood, one step toward your own product.";
+        : "Today, protect your focus: one work outcome, one problem understood, one step toward your own product.");
   const speak = () => {
     if (!("speechSynthesis" in window)) {
       toast.info("Spoken briefings are unavailable in this browser.");
@@ -206,9 +222,7 @@ export default function OS() {
     }
     window.speechSynthesis.cancel();
     const speech = new SpeechSynthesisUtterance(
-      "Hello Nivetha. " +
-        briefing +
-        " Discipline includes knowing when to stop.",
+      "Hello Nivetha. " + briefing + " Make room for the life you want.",
     );
     speech.rate = 0.93;
     window.speechSynthesis.speak(speech);
@@ -229,7 +243,12 @@ export default function OS() {
     const blob = new Blob(
       [
         JSON.stringify(
-          { app: "Nivetha OS", exported: new Date().toISOString(), records },
+          {
+            app: "Nivetha OS",
+            exported: new Date().toISOString(),
+            records,
+            whoop: whoop.data?.snapshot || null,
+          },
           null,
           2,
         ),
@@ -290,17 +309,19 @@ export default function OS() {
       <Sidebar className="os-sidebar">
         <SidebarHeader>
           <a className="brand" href="/">
-            <span className="brand-mark">N</span>
+            <span className="brand-mark">
+              <Heart size={21} fill="currentColor" />
+            </span>
             <span>
-              NIVETHA<span className="brand-os"> OS</span>
-              <small>PERSONAL OPERATING SYSTEM</small>
+              Nivetha<span className="brand-os">os</span>
+              <small>MY LIFE, ON MY TERMS</small>
             </span>
           </a>
         </SidebarHeader>
         <SidebarContent>
-          <div className="nav-label">YOUR CONTROL CENTER</div>
+          <div className="nav-label">THE DAILY EDIT</div>
           <SidebarMenu>
-            {nav.map(([name, Icon], i) => (
+            {nav.map(([name, Icon]) => (
               <SidebarMenuItem key={name}>
                 <SidebarMenuButton
                   isActive={page === name}
@@ -309,34 +330,36 @@ export default function OS() {
                 >
                   <Icon />
                   <span>{name}</span>
-                  {i === 2 && <span className="nav-count">{active}</span>}
+                  {name === "Active goals" && (
+                    <span className="nav-count">{active}</span>
+                  )}
                 </SidebarMenuButton>
               </SidebarMenuItem>
             ))}
           </SidebarMenu>
           <div className="sidebar-mission">
             <Mountain size={22} />
-            <p>The two-year mission</p>
+            <p>Dear future me,</p>
             <span>September 2026 → 2028</span>
             <Progress
               value={Math.min(100, (days / 730) * 100)}
               aria-label="Time elapsed in two-year plan"
             />
-            <small>Build fewer things. Finish more.</small>
+            <small>September 2028. Make it yours.</small>
           </div>
         </SidebarContent>
         <SidebarFooter>
           <div className="profile">
             <span className="avatar">N</span>
             <div>
-              Nivetha<small>Engineer. Builder. Becoming.</small>
+              Nivetha<small>My private little universe</small>
             </div>
             <ShieldCheck size={17} />
           </div>
         </SidebarFooter>
       </Sidebar>
       <main className="main-shell">
-        <Toaster richColors theme="dark" />
+        <Toaster richColors theme="light" />
         <header className="topbar">
           <div className="breadcrumb">
             <SidebarTrigger />
@@ -367,7 +390,9 @@ export default function OS() {
               </a>
             </div>
           )}
-          {page !== "Command center" ? (
+          {page === "WHOOP" ? (
+            <WhoopPanel whoop={whoop} />
+          ) : page !== "Command center" ? (
             <View
               key={page}
               page={page}
@@ -377,7 +402,7 @@ export default function OS() {
               remove={setDeleteTarget}
             />
           ) : (
-            <>
+            <div className="dashboard-page">
               <div className="page-heading">
                 <div>
                   <p className="eyebrow">
@@ -392,11 +417,9 @@ export default function OS() {
                       .toUpperCase()}
                   </p>
                   <h1>
-                    Your next chapter starts today<span>.</span>
+                    Hi, <em>Nivetha.</em>
                   </h1>
-                  <p>
-                    Less noise. More intention. One meaningful day at a time.
-                  </p>
+                  <p>Your body. Your work. Your life outside both.</p>
                 </div>
                 <button
                   className="button secondary"
@@ -405,40 +428,34 @@ export default function OS() {
                   <Plus size={16} /> Quick capture
                 </button>
               </div>
+              <WhoopPanel
+                whoop={whoop}
+                compact
+                onOpen={() => setPage("WHOOP")}
+              />
               <section className="briefing">
                 <div className="briefing-copy">
                   <span className="chip">
-                    <Sparkles size={13} /> ORBIT · YOUR DAILY BRIEFING
+                    <Sparkles size={13} /> A NOTE FROM ORBIT
                   </span>
-                  <h2>
-                    You have the drive.
-                    <br />
-                    Let’s give it direction.
-                  </h2>
+                  <h2>What matters today?</h2>
                   <p>{briefing}</p>
                   <div className="briefing-actions">
                     <button
                       className="button primary"
                       onClick={() => setPage("Today")}
                     >
-                      <Play size={15} fill="currentColor" /> Begin your day
+                      <Play size={15} fill="currentColor" /> Plan my day
                     </button>
                     <button className="text-button" onClick={speak}>
-                      <Volume2 size={17} /> Listen to briefing
+                      <Volume2 size={17} /> Read it to me
                     </button>
                   </div>
                 </div>
-                <div className="orb-scene" aria-hidden="true">
-                  <div className="orbit orbit-one" />
-                  <div className="orbit orbit-two" />
-                  <div className="orbit orbit-three" />
-                  <div className="orb">
-                    <div className="orb-core" />
-                  </div>
-                  <span className="orb-caption">FOCUS IS YOUR SUPERPOWER</span>
-                  <span className="orb-coord">
-                    N / 01 &nbsp; — &nbsp; SYSTEM READY
-                  </span>
+                <div className="pink-keepsake" aria-hidden="true">
+                  <span className="keepsake-star">✦</span>
+                  <span className="heart-sticker">♥</span>
+                  <span className="keepsake-signature">xo, orbit</span>
                 </div>
               </section>
               <div className="stat-grid">
@@ -469,7 +486,7 @@ export default function OS() {
                   ],
                   [
                     Activity,
-                    "Recovery",
+                    "Your check-in",
                     latestHealth?.data.date === date
                       ? latestHealth.data.energy
                       : "—",
@@ -513,8 +530,8 @@ export default function OS() {
                 <section className="panel priorities">
                   <div className="section-heading">
                     <div>
-                      <h2>Today’s big three</h2>
-                      <p>Everything else can wait.</p>
+                      <h2>Today’s little list</h2>
+                      <p>Three things that deserve your attention.</p>
                     </div>
                     <span className="small-badge">
                       {completed} / {tasks.length} complete
@@ -617,14 +634,14 @@ export default function OS() {
                   </div>
                 </section>
                 <section className="panel north-star">
-                  <span className="eyebrow">YOUR NORTH STAR</span>
+                  <span className="eyebrow">THE LIFE YOU’RE BUILDING</span>
                   <Mountain size={27} />
                   <h2>
-                    Strong engineer.
+                    Build cool things.
                     <br />
-                    Strong body.
+                    Feel strong.
                     <br />
-                    <em>A life of your own.</em>
+                    <em>Have a life you love.</em>
                   </h2>
                   <p>
                     Enterprise depth. Algorithmic fluency. Products you can
@@ -640,8 +657,8 @@ export default function OS() {
               </div>
               <div className="section-heading goals-heading">
                 <div>
-                  <h2>Four lanes. One direction.</h2>
-                  <p>Keep the promises you chose. Park the rest.</p>
+                  <h2>The bigger picture</h2>
+                  <p>Work, code, create, and live.</p>
                 </div>
                 <span className="eyebrow">FOCUS LIMIT: {active} / 4</span>
               </div>
@@ -693,7 +710,7 @@ export default function OS() {
                   </button>
                 ))}
               </div>
-            </>
+            </div>
           )}
           <div className="utility-bar">
             <span className={status.includes("failed") ? "peach" : "muted"}>
@@ -728,7 +745,7 @@ export default function OS() {
               <ShieldCheck size={14} /> Discipline includes knowing when to
               stop.
             </span>
-            <span>NIVETHA OS / V1.0</span>
+            <span>NIVETHA OS · THE PINK EDIT</span>
           </footer>
         </div>
       </main>

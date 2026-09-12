@@ -48,3 +48,6 @@ next-env.d.ts
 /android/.private/
 *.tsbuildinfo
 /examples/
+# WHOOP configuration template is safe; real environment files remain ignored.
+!.env.example
+.dev.vars*

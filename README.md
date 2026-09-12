@@ -4,9 +4,13 @@ Private web-first life control center, plus an installable Android companion. OR
 
 ## Use
 
-Open the private deployed URL and sign in with the owner's ChatGPT account. Use the same account on other devices. Pick three daily priorities, log real practice and progress, and use weekly reviews to adjust the plan. All dates use Asia/Kolkata. No calendar, LeetCode, wearable, or workplace integrations are enabled; V1 uses manual entries.
+Open the private deployed URL and sign in with the owner's ChatGPT account. Use the same account on other devices. Pick three daily priorities, log real practice and progress, and use weekly reviews to adjust the plan. All dates use Asia/Kolkata. Calendar, LeetCode and workplace entries remain manual. WHOOP has a direct OAuth integration for sleep, recovery, strain and workouts; complete the [WHOOP setup guide](docs/WHOOP_SETUP.md) to enable live data.
 
 The two-year roadmap spans September 2026–August 2028. It is a planning proposal, not a health, career, or income guarantee. The health section links to [WHO physical activity guidance](https://www.who.int/news-room/fact-sheets/detail/physical-activity); it avoids diet prescriptions and punitive exercise.
+
+## WHOOP
+
+Open WHOOP from the sidebar to connect, sync, inspect 30 days of body data, or disconnect. The homepage brings the latest cycle alongside your daily plans. Sync runs while the app is open; closed-app background syncing is not enabled. No live WHOOP authorization has been completed yet. See [setup instructions](docs/WHOOP_SETUP.md).
 
 ## Android
 
@@ -24,7 +28,7 @@ Install the APK on your phone and allow installation from the app opening the do
 
 ## Development
 
-The React/Vinext frontend uses the starter's Shadcn primitives, with a bespoke dark green control-center theme. Sites provides private hosting and dispatch-owned ChatGPT sign-in. Cloudflare D1 is the central source of truth. Browser storage does not hold authoritative records.
+The React/Vinext frontend uses the starter's Shadcn primitives, with a pink theme with a contrasting body-signal surface. Sites provides private hosting and dispatch-owned ChatGPT sign-in. Cloudflare D1 is the central source of truth. Browser storage does not hold authoritative records.
 
 - `npm run dev` starts the portable local preview at its printed URL.
 - `/signin-with-chatgpt?return_to=/` simulates identity on loopback only.

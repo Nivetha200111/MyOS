@@ -20,3 +20,18 @@ export const records = sqliteTable(
     index("idx_records_owner_kind").on(t.owner, t.kind),
   ],
 );
+
+// Credentials are AES-GCM encrypted; none are included in workspace exports.
+export const whoopConnections = sqliteTable("whoop_connections", {
+  owner: text("owner").primaryKey(),
+  credentials: text("credentials"),
+  snapshot: text("snapshot"),
+  updated: integer("updated"),
+  lease: text("lease"),
+  leaseUntil: integer("lease_until").notNull().default(0),
+});
+export const whoopStates = sqliteTable("whoop_states", {
+  owner: text("owner").primaryKey(),
+  hash: text("hash").notNull(),
+  expires: integer("expires").notNull(),
+});
