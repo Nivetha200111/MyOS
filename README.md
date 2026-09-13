@@ -10,7 +10,11 @@ The two-year roadmap spans September 2026–August 2028. It is a planning propos
 
 ## WHOOP
 
-Open WHOOP from the sidebar to connect, sync, inspect 30 days of body data, or disconnect. The homepage brings the latest cycle alongside your daily plans. Sync runs while the app is open; closed-app background syncing is not enabled. No live WHOOP authorization has been completed yet. See [setup instructions](docs/WHOOP_SETUP.md).
+Open **My rhythm** for ORBIT’s daily companion: choose a pace, start a session on a real priority, compare recent sleep with your own baseline, explore seven days of rest and logged focus, and begin a weekly reflection with a summary. WHOOP connection controls and 30-day readings sit under **WHOOP connection & detailed readings**.
+
+WHOOP credentials are configured once on the private server; account tokens refresh automatically. Sync runs while the app is open; closed-app background syncing is not enabled. Reconnect only if authorization is revoked or can no longer be refreshed. See [setup instructions](docs/WHOOP_SETUP.md).
+
+ORBIT uses transparent local rules, not an LLM or medical recommendations. Pace is an explicit choice for the next session (default: steady, or gentle following a low-energy manual check-in). Sleep comparisons use scored non-nap records, show sample sizes, and require at least three observations per group. Associations do not establish causation. Focus only includes completed sessions recorded in the OS. Your private records are not included in this repository.
 
 ## Android
 

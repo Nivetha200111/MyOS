@@ -38,7 +38,7 @@ For local development, use the same environment names in `.env`, register a sepa
 
 ## 3. Connect and sync
 
-1. Open **WHOOP** in your OS.
+1. Open **My rhythm**, then expand **WHOOP connection & detailed readings** in your OS.
 2. Click **Refresh setup status**. Once the server is configured, **Connect WHOOP** appears.
 3. Click it, sign in on WHOOP's own website, and grant access.
 4. WHOOP returns you to your OS. Your first sync loads the last 30 days.

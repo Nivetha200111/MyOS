@@ -25,6 +25,7 @@ import {
 import { Editor, type EditTarget } from "./editor";
 import { View } from "./views";
 import { WhoopPanel } from "./whoop-panel";
+import { DailyCompanion } from "./daily-companion";
 import { useWhoop } from "./use-whoop";
 import { cycleSignals, indiaDate } from "@/lib/whoop-data";
 import { useWorkspace } from "./use-workspace";
@@ -72,7 +73,7 @@ import { Progress } from "@/components/ui/progress";
 const nav = [
   ["Command center", LayoutDashboard],
   ["Today", ListTodo],
-  ["WHOOP", Heart],
+  ["My rhythm", Heart],
   ["Active goals", Target],
   ["Work", BriefcaseBusiness],
   ["LeetCode", Code2],
@@ -106,7 +107,7 @@ const priorities = [
 const routes: Record<string, string> = {
   "Command center": "/",
   Today: "/today",
-  WHOOP: "/whoop",
+  "My rhythm": "/whoop",
   "Active goals": "/goals",
   Work: "/work",
   LeetCode: "/leetcode",
@@ -122,6 +123,7 @@ export default function OS() {
   const [editor, setEditor] = useState<EditTarget | null>(null);
   const [command, setCommand] = useState(false);
   const [focusOpen, setFocusOpen] = useState(false);
+  const [sourceOpen, setSourceOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<RecordItem | null>(null);
   const [now, setNow] = useState(Date.now());
   const { records, status, ready, busy, reload, save, remove } = useWorkspace();
@@ -186,6 +188,8 @@ export default function OS() {
           "Command center",
       );
     sync();
+    if (new URLSearchParams(location.search).has("connection"))
+      setSourceOpen(true);
     window.addEventListener("popstate", sync);
     const timer = setInterval(() => setNow(Date.now()), 1000);
     const shortcut = (e: KeyboardEvent) => {
@@ -302,6 +306,54 @@ export default function OS() {
     } catch {}
     return () => lifecycle.abort();
   }, [records, date]);
+  const companion = (
+    <DailyCompanion
+      key={date}
+      whoop={whoop}
+      records={records}
+      date={date}
+      onFocus={(title, minutes) => {
+        if (session) setFocusOpen(true);
+        else setEditor({ kind: "focus", initial: { title, minutes } });
+      }}
+      onCheckIn={() =>
+        setEditor({
+          kind: "health",
+          ...(latestHealth?.data.date === date ? { record: latestHealth } : {}),
+          initial:
+            body.hours == null ||
+            !body.cycle?.start ||
+            indiaDate(body.cycle.start) !== date
+              ? undefined
+              : { sleep: Math.round(body.hours * 10) / 10 },
+        })
+      }
+      onPlan={() =>
+        setEditor({ kind: "task", initial: { priority: tasks.length < 3 } })
+      }
+      onReview={() => setPage("LeetCode")}
+      onReflect={(work, health) =>
+        setEditor({
+          kind: "review",
+          initial: {
+            period: "Weekly",
+            title: "My week · " + date,
+            work,
+            health,
+          },
+        })
+      }
+      onDetails={() => {
+        setSourceOpen(true);
+        setPage("My rhythm");
+        requestAnimationFrame(() =>
+          document
+            .getElementById("source-readings")
+            ?.scrollIntoView({ behavior: "smooth" }),
+        );
+      }}
+    />
+  );
   return (
     <SidebarProvider
       style={{ "--sidebar-width": "232px" } as React.CSSProperties}
@@ -390,8 +442,30 @@ export default function OS() {
               </a>
             </div>
           )}
-          {page === "WHOOP" ? (
-            <WhoopPanel whoop={whoop} />
+          {page === "My rhythm" ? (
+            <>
+              <div className="page-heading">
+                <div>
+                  <p className="eyebrow">BODY / WORK / LIFE</p>
+                  <h1>
+                    Find your <em>rhythm.</em>
+                  </h1>
+                  <p>
+                    Your numbers are context. You decide what today becomes.
+                  </p>
+                </div>
+              </div>
+              {companion}
+              <details
+                id="source-readings"
+                className="source-details"
+                open={sourceOpen}
+                onToggle={(e) => setSourceOpen(e.currentTarget.open)}
+              >
+                <summary>WHOOP connection & detailed readings</summary>
+                <WhoopPanel whoop={whoop} />
+              </details>
+            </>
           ) : page !== "Command center" ? (
             <View
               key={page}
@@ -428,36 +502,7 @@ export default function OS() {
                   <Plus size={16} /> Quick capture
                 </button>
               </div>
-              <WhoopPanel
-                whoop={whoop}
-                compact
-                onOpen={() => setPage("WHOOP")}
-              />
-              <section className="briefing">
-                <div className="briefing-copy">
-                  <span className="chip">
-                    <Sparkles size={13} /> A NOTE FROM ORBIT
-                  </span>
-                  <h2>What matters today?</h2>
-                  <p>{briefing}</p>
-                  <div className="briefing-actions">
-                    <button
-                      className="button primary"
-                      onClick={() => setPage("Today")}
-                    >
-                      <Play size={15} fill="currentColor" /> Plan my day
-                    </button>
-                    <button className="text-button" onClick={speak}>
-                      <Volume2 size={17} /> Read it to me
-                    </button>
-                  </div>
-                </div>
-                <div className="pink-keepsake" aria-hidden="true">
-                  <span className="keepsake-star">✦</span>
-                  <span className="heart-sticker">♥</span>
-                  <span className="keepsake-signature">xo, orbit</span>
-                </div>
-              </section>
+              {companion}
               <div className="stat-grid">
                 {[
                   [
